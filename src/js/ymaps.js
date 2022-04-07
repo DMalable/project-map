@@ -13,6 +13,7 @@ function mapInit() {
     let storage = JSON.parse(localStorage.data);
     storage.forEach((item, i) => {
       let geoObject = new ymaps.Placemark(item.coords, {
+        clusterCaption: item.place,
         balloonContent:
           `<ul class='reviews'>
           <li class='reviews__item'>
@@ -93,6 +94,8 @@ function mapInit() {
     });
 
     let clusterer = new ymaps.Clusterer({
+      //почему-то не работает clusterballoonContentLayoutHeight
+      balloonContentLayoutHeight: "",
       clusterDisableClickZoom: true,
     });
     //load data from localStorage
