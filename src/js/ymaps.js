@@ -13,7 +13,7 @@ function mapInit() {
     let storage = JSON.parse(localStorage.data);
     storage.forEach((item, i) => {
       let geoObject = new ymaps.Placemark(item.coords, {
-        clusterCaption: item.place,
+        // clusterCaption: item.place,
         balloonContent:
           `<ul class='reviews'>
           <li class='reviews__item'>
@@ -93,11 +93,21 @@ function mapInit() {
       floatIndex: 300,
     });
 
+    let reviewHTML = "";
+
+    let customBalloonContentLayout = ymaps.templateLayoutFactory.createClass(
+      `<ul class='reviews'>
+      ${reviewHTML}
+      </ul>` + balloonTemplate
+    );
+
     let clusterer = new ymaps.Clusterer({
-      //почему-то не работает clusterballoonContentLayoutHeight
-      balloonContentLayoutHeight: "",
+      clusterBalloonContentLayout: customBalloonContentLayout,
+      clusterOpenBalloonOnClick: true,
+      clusterBalloonMaxWidth: 310,
       clusterDisableClickZoom: true,
     });
+
     //load data from localStorage
     if (localStorage.data) {
       updatePlacemarks(spb, clusterer);
@@ -105,9 +115,10 @@ function mapInit() {
       localStorage.data = "[]";
     }
 
-    //Open balloon by click
+    //Open balloon by click on map
     spb.events.add("click", function (e) {
       if (!spb.balloon.isOpen()) {
+        console.log(e);
         let coords = e.get("coords");
         spb.balloon
           .open(coords, {
@@ -130,6 +141,22 @@ function mapInit() {
           });
       } else {
         spb.balloon.close();
+      }
+    });
+
+    //Open balloon by click on cluster
+    clusterer.events.add("click", function (e) {
+      let clusterPlacemark = e.get("target");
+      if (clusterPlacemark.getGeoObjects) {
+        let geoObjects = clusterPlacemark.getGeoObjects();
+
+        geoObjects.forEach((item) => {
+          let htmlString = item.properties._data.balloonContent;
+          let htmlText = new DOMParser().parseFromString(htmlString, "text/html");
+          reviewHTML += htmlText.querySelector(".reviews__item").outerHTML;
+        });
+        //разметка для вставки в балун кластера
+        console.log(reviewHTML);
       }
     });
   });
