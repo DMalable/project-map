@@ -1,35 +1,29 @@
-let geoObjects = [];
+import reviewTemplate from "../templates/reviews.hbs";
 
 function mapInit() {
   let balloonTemplate = `<form class='balloon-form'>
-  <h3 class='balloon-form__header'>Отзыв:</h3>
-  <input class='balloon-form__input' placeholder='Укажите ваше имя' name="firstName" required>
-  <input class='balloon-form__input' placeholder='Укажите место' name="place" required>
-  <textarea class='balloon-form__input balloon-form__input--textarea' placeholder='Оставьте отзыв' name="review" required></textarea>
-  <button class="balloon-form__button">Добавить</button>
+    <h3 class='balloon-form__header'>Отзыв:</h3>
+    <input class='balloon-form__input' placeholder='Укажите ваше имя' name="firstName" required>
+    <input class='balloon-form__input' placeholder='Укажите место' name="place" required>
+    <textarea class='balloon-form__input balloon-form__input--textarea' placeholder='Оставьте отзыв' name="review" required></textarea>
+    <button class="balloon-form__button">Добавить</button>
   </form>`;
 
   function updatePlacemarks(myMap, clusterer) {
     let storage = JSON.parse(localStorage.data);
+    let geoObjects = [];
+
     storage.forEach((item, i) => {
+      //html from reviews.hbs template
+      let reviewHTML = reviewTemplate(item);
       let geoObject = new ymaps.Placemark(item.coords, {
-        // clusterCaption: item.place,
-        balloonContent:
-          `<ul class='reviews'>
-          <li class='reviews__item'>
-            <div class='reviews__item-info'>
-              <span class='reviews__item-name'>${item.firstName}</span> 
-              <span class='reviews__item-place'>${item.place}</span>
-              <span class='reviews__item-date'>${item.date}</span>
-            </div>
-            <div class='reviews__item-text'>${item.review}</div>
-            </li>
-        </ul>` + balloonTemplate,
+        balloonContent: reviewHTML + balloonTemplate,
       });
       geoObjects.push(geoObject);
     });
-    myMap.geoObjects.add(clusterer);
+    clusterer.removeAll();
     clusterer.add(geoObjects);
+    myMap.geoObjects.add(clusterer);
   }
 
   function addPlacemarkToLocalStorage(coords, form) {
@@ -93,32 +87,9 @@ function mapInit() {
       floatIndex: 300,
     });
 
-    let reviewHTML = "";
-
-    let customBalloonContentLayout = ymaps.templateLayoutFactory.createClass(
-      `<ul class='reviews'>
-      ${reviewHTML}
-      </ul>` + balloonTemplate
-    );
-
-    let clusterer = new ymaps.Clusterer({
-      clusterBalloonContentLayout: customBalloonContentLayout,
-      clusterOpenBalloonOnClick: true,
-      clusterBalloonMaxWidth: 310,
-      clusterDisableClickZoom: true,
-    });
-
-    //load data from localStorage
-    if (localStorage.data) {
-      updatePlacemarks(spb, clusterer);
-    } else {
-      localStorage.data = "[]";
-    }
-
     //Open balloon by click on map
     spb.events.add("click", function (e) {
       if (!spb.balloon.isOpen()) {
-        console.log(e);
         let coords = e.get("coords");
         spb.balloon
           .open(coords, {
@@ -136,7 +107,7 @@ function mapInit() {
 
               spb.balloon.close();
 
-              updatePlacemarks(spb);
+              updatePlacemarks(spb, clusterer);
             });
           });
       } else {
@@ -144,19 +115,40 @@ function mapInit() {
       }
     });
 
+    let clusterer = new ymaps.Clusterer({
+      groupByCoordinates: true,
+      clusterOpenBalloonOnClick: true,
+      clusterBalloonMaxWidth: 310,
+      clusterDisableClickZoom: true,
+    });
+
+    //load data from localStorage
+    if (localStorage.data) {
+      updatePlacemarks(spb, clusterer);
+    } else {
+      localStorage.data = "[]";
+    }
+
     //Open balloon by click on cluster
     clusterer.events.add("click", function (e) {
       let clusterPlacemark = e.get("target");
+
       if (clusterPlacemark.getGeoObjects) {
         let geoObjects = clusterPlacemark.getGeoObjects();
-
+        let reviewHTML = "";
         geoObjects.forEach((item) => {
-          let htmlString = item.properties._data.balloonContent;
+          let htmlString = item.properties.get("balloonContent");
           let htmlText = new DOMParser().parseFromString(htmlString, "text/html");
+          //разметка для вставки в балун кластера
           reviewHTML += htmlText.querySelector(".reviews__item").outerHTML;
         });
-        //разметка для вставки в балун кластера
-        console.log(reviewHTML);
+
+        let customBalloonContentLayout = ymaps.templateLayoutFactory.createClass(
+          `<ul class='reviews'>
+          ${reviewHTML}
+          </ul>` + balloonTemplate
+        );
+        clusterPlacemark.options.set("balloonContentLayout", customBalloonContentLayout);
       }
     });
   });
