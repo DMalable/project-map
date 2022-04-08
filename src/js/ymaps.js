@@ -129,17 +129,19 @@ function mapInit() {
       localStorage.data = "[]";
     }
 
-    //Open balloon by click on cluster
+    //Set balloon text by click on cluster
     clusterer.events.add("click", function (e) {
       let clusterPlacemark = e.get("target");
-
+      let coords = clusterPlacemark.geometry.getCoordinates();
+      //if object is cluster set text
       if (clusterPlacemark.getGeoObjects) {
         let geoObjects = clusterPlacemark.getGeoObjects();
         let reviewHTML = "";
+
         geoObjects.forEach((item) => {
           let htmlString = item.properties.get("balloonContent");
           let htmlText = new DOMParser().parseFromString(htmlString, "text/html");
-          //разметка для вставки в балун кластера
+
           reviewHTML += htmlText.querySelector(".reviews__item").outerHTML;
         });
 
@@ -150,6 +152,22 @@ function mapInit() {
         );
         clusterPlacemark.options.set("balloonContentLayout", customBalloonContentLayout);
       }
+
+      spb.balloon.open().then(() => {
+        const balloonForm = document.querySelector(".balloon-form");
+        const balloonButton = balloonForm.querySelector(".balloon-form__button");
+        console.log("Всё сработает", balloonButton);
+        balloonButton.addEventListener("click", (e) => {
+          e.preventDefault();
+
+          if (!balloonForm.firstName.value || !balloonForm.place.value || !balloonForm.review.value) return;
+          addPlacemarkToLocalStorage(coords, balloonForm);
+
+          spb.balloon.close();
+
+          updatePlacemarks(spb, clusterer);
+        });
+      });
     });
   });
 }
