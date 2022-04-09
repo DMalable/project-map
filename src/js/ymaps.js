@@ -145,12 +145,6 @@ function mapInit() {
           reviewHTML += htmlText.querySelector(".reviews__item").outerHTML;
         });
         reviewHTML = `<ul class='reviews'>${reviewHTML}</ul>`;
-        // let customBalloonContentLayout = ymaps.templateLayoutFactory.createClass(
-        //   `<ul class='reviews'>
-        //   ${reviewHTML}
-        //   </ul>` + balloonTemplate
-        // );
-        // clusterPlacemark.options.set("balloonContentLayout", customBalloonContentLayout);
       }
 
       // console.log(reviewHTML);
@@ -158,12 +152,11 @@ function mapInit() {
       spb.balloon
         .open(coords, {
           contentBody: reviewHTML + balloonTemplate,
-          // maxheight: 200,
         })
         .then(() => {
           const balloonForm = document.querySelector(".balloon-form");
           const balloonButton = balloonForm.querySelector(".balloon-form__button");
-          console.log("Всё сработает", balloonButton);
+          console.log(balloonButton);
           balloonButton.addEventListener("click", (e) => {
             e.preventDefault();
 
