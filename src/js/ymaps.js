@@ -89,6 +89,7 @@ function mapInit() {
 
     //Open balloon by click on map
     spb.events.add("click", function (e) {
+      spb.options.set("balloonMinHeight", 0);
       if (!spb.balloon.isOpen()) {
         let coords = e.get("coords");
         spb.balloon
@@ -136,6 +137,9 @@ function mapInit() {
       //if object is cluster set text
       let reviewHTML = "";
       if (clusterPlacemark.getGeoObjects) {
+        let balloonHeight = clusterPlacemark.getGeoObjects().length * 60 + 350;
+        spb.options.set("balloonMinHeight", balloonHeight);
+
         let geoObjects = clusterPlacemark.getGeoObjects();
 
         geoObjects.forEach((item) => {
@@ -145,6 +149,8 @@ function mapInit() {
           reviewHTML += htmlText.querySelector(".reviews__item").outerHTML;
         });
         reviewHTML = `<ul class='reviews'>${reviewHTML}</ul>`;
+      } else {
+        spb.options.set("balloonMinHeight", 0);
       }
 
       // console.log(reviewHTML);
