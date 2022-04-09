@@ -116,7 +116,7 @@ function mapInit() {
     });
 
     let clusterer = new ymaps.Clusterer({
-      groupByCoordinates: true,
+      // groupByCoordinates: true,
       clusterOpenBalloonOnClick: true,
       clusterBalloonMaxWidth: 310,
       clusterDisableClickZoom: true,
