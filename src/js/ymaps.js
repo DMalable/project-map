@@ -117,7 +117,7 @@ function mapInit() {
 
     let clusterer = new ymaps.Clusterer({
       // groupByCoordinates: true,
-      clusterOpenBalloonOnClick: true,
+      clusterOpenBalloonOnClick: false,
       clusterBalloonMaxWidth: 310,
       clusterDisableClickZoom: true,
     });
@@ -134,9 +134,9 @@ function mapInit() {
       let clusterPlacemark = e.get("target");
       let coords = clusterPlacemark.geometry.getCoordinates();
       //if object is cluster set text
+      let reviewHTML = "";
       if (clusterPlacemark.getGeoObjects) {
         let geoObjects = clusterPlacemark.getGeoObjects();
-        let reviewHTML = "";
 
         geoObjects.forEach((item) => {
           let htmlString = item.properties.get("balloonContent");
@@ -144,30 +144,37 @@ function mapInit() {
 
           reviewHTML += htmlText.querySelector(".reviews__item").outerHTML;
         });
-
-        let customBalloonContentLayout = ymaps.templateLayoutFactory.createClass(
-          `<ul class='reviews'>
-          ${reviewHTML}
-          </ul>` + balloonTemplate
-        );
-        clusterPlacemark.options.set("balloonContentLayout", customBalloonContentLayout);
+        reviewHTML = `<ul class='reviews'>${reviewHTML}</ul>`;
+        // let customBalloonContentLayout = ymaps.templateLayoutFactory.createClass(
+        //   `<ul class='reviews'>
+        //   ${reviewHTML}
+        //   </ul>` + balloonTemplate
+        // );
+        // clusterPlacemark.options.set("balloonContentLayout", customBalloonContentLayout);
       }
 
-      spb.balloon.open().then(() => {
-        const balloonForm = document.querySelector(".balloon-form");
-        const balloonButton = balloonForm.querySelector(".balloon-form__button");
-        console.log("Всё сработает", balloonButton);
-        balloonButton.addEventListener("click", (e) => {
-          e.preventDefault();
+      // console.log(reviewHTML);
 
-          if (!balloonForm.firstName.value || !balloonForm.place.value || !balloonForm.review.value) return;
-          addPlacemarkToLocalStorage(coords, balloonForm);
+      spb.balloon
+        .open(coords, {
+          contentBody: reviewHTML + balloonTemplate,
+          // maxheight: 200,
+        })
+        .then(() => {
+          const balloonForm = document.querySelector(".balloon-form");
+          const balloonButton = balloonForm.querySelector(".balloon-form__button");
+          console.log("Всё сработает", balloonButton);
+          balloonButton.addEventListener("click", (e) => {
+            e.preventDefault();
 
-          spb.balloon.close();
+            if (!balloonForm.firstName.value || !balloonForm.place.value || !balloonForm.review.value) return;
+            addPlacemarkToLocalStorage(coords, balloonForm);
 
-          updatePlacemarks(spb, clusterer);
+            spb.balloon.close();
+
+            updatePlacemarks(spb, clusterer);
+          });
         });
-      });
     });
   });
 }
